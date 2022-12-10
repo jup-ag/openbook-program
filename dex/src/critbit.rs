@@ -756,7 +756,7 @@ impl Slab {
     }
 
     pub fn iter(&self, descending: bool) -> LeafNodeIterator<'_> {
-        let mut stack = vec![];
+        let mut stack = Vec::with_capacity(self.header().leaf_count as usize);
         if let Some(node_handle) = self.root() {
             stack.push(node_handle);
         }
