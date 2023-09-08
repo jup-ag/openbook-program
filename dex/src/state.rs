@@ -23,7 +23,7 @@ use spl_token::error::TokenError;
 
 use crate::{
     critbit::Slab,
-    error::{DexErrorCode, DexResult, SourceFileId, DexError},
+    error::{DexError, DexErrorCode, DexResult, SourceFileId},
     fees::{self, FeeTier},
     instruction::{
         disable_authority, fee_sweeper, msrm_token, srm_token, CancelOrderInstructionV2,
@@ -472,6 +472,19 @@ impl MarketState {
         Ok(RefMut::map(buf, Slab::new))
     }
 
+    pub fn load_event_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<EventQueue<'a>> {
+        check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.event_q))
+            .map_err(|_| DexErrorCode::WrongEventQueueAccount)?;
+        let (header, buf) = strip_header::<EventQueueHeader, Event>(queue, false)?;
+
+        let flags = BitFlags::from_bits(header.account_flags).unwrap();
+        check_assert_eq!(
+            &flags,
+            &(AccountFlag::Initialized | AccountFlag::EventQueue)
+        )?;
+        Ok(Queue { header, buf })
+    }
+
     fn load_request_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<RequestQueue<'a>> {
         check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.req_q))
             .map_err(|_| DexErrorCode::WrongRequestQueueAccount)?;
@@ -481,19 +494,6 @@ impl MarketState {
         check_assert_eq!(
             &flags,
             &(AccountFlag::Initialized | AccountFlag::RequestQueue)
-        )?;
-        Ok(Queue { header, buf })
-    }
-
-    fn load_event_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<EventQueue<'a>> {
-        check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.event_q))
-            .map_err(|_| DexErrorCode::WrongEventQueueAccount)?;
-        let (header, buf) = strip_header::<EventQueueHeader, Event>(queue, false)?;
-
-        let flags = BitFlags::from_bits(header.account_flags).unwrap();
-        check_assert_eq!(
-            &flags,
-            &(AccountFlag::Initialized | AccountFlag::EventQueue)
         )?;
         Ok(Queue { header, buf })
     }
@@ -2912,7 +2912,7 @@ impl State {
                         }
                         return Err(err);
                     }
-                    _ => return Err(err)
+                    _ => return Err(err),
                 }
             }
         }
