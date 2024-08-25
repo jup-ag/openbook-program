@@ -33,7 +33,7 @@ use crate::{
     matching::{OrderBookState, OrderType, RequestProceeds, Side},
 };
 
-use anchor_lang::prelude::{borsh, emit, event, AnchorDeserialize, AnchorSerialize};
+use anchor_lang::prelude::*;
 
 declare_check_assert_macros!(SourceFileId::State);
 
