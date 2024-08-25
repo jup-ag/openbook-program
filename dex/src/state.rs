@@ -33,7 +33,7 @@ use crate::{
     matching::{OrderBookState, OrderType, RequestProceeds, Side},
 };
 
-use anchor_lang::prelude::{borsh, emit, event, AnchorDeserialize, AnchorSerialize};
+// use anchor_lang::prelude::{borsh, emit, event, AnchorDeserialize, AnchorSerialize, IdlBuild};
 
 declare_check_assert_macros!(SourceFileId::State);
 
@@ -474,6 +474,19 @@ impl MarketState {
         Ok(RefMut::map(buf, Slab::new))
     }
 
+    pub fn load_event_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<EventQueue<'a>> {
+        check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.event_q))
+            .map_err(|_| DexErrorCode::WrongEventQueueAccount)?;
+        let (header, buf) = strip_header::<EventQueueHeader, Event>(queue, false)?;
+
+        let flags = BitFlags::from_bits(header.account_flags).unwrap();
+        check_assert_eq!(
+            &flags,
+            &(AccountFlag::Initialized | AccountFlag::EventQueue)
+        )?;
+        Ok(Queue { header, buf })
+    }
+
     fn load_request_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<RequestQueue<'a>> {
         check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.req_q))
             .map_err(|_| DexErrorCode::WrongRequestQueueAccount)?;
@@ -483,19 +496,6 @@ impl MarketState {
         check_assert_eq!(
             &flags,
             &(AccountFlag::Initialized | AccountFlag::RequestQueue)
-        )?;
-        Ok(Queue { header, buf })
-    }
-
-    fn load_event_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<EventQueue<'a>> {
-        check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.event_q))
-            .map_err(|_| DexErrorCode::WrongEventQueueAccount)?;
-        let (header, buf) = strip_header::<EventQueueHeader, Event>(queue, false)?;
-
-        let flags = BitFlags::from_bits(header.account_flags).unwrap();
-        check_assert_eq!(
-            &flags,
-            &(AccountFlag::Initialized | AccountFlag::EventQueue)
         )?;
         Ok(Queue { header, buf })
     }
@@ -1348,34 +1348,34 @@ impl EventView {
     }
 }
 
-#[event]
-pub struct FillEventLog {
-    market: Pubkey,
-    open_orders: Pubkey,
-    open_orders_owner: Pubkey,
-    bid: bool,
-    maker: bool,
-    native_qty_paid: u64,
-    native_qty_received: u64,
-    native_fee_or_rebate: u64,
-    order_id: u128,
-    owner_slot: u8,
-    fee_tier: u8,
-    client_order_id: Option<u64>,
-    referrer_rebate: Option<u64>,
-}
+// #[event]
+// pub struct FillEventLog {
+//     market: Pubkey,
+//     open_orders: Pubkey,
+//     open_orders_owner: Pubkey,
+//     bid: bool,
+//     maker: bool,
+//     native_qty_paid: u64,
+//     native_qty_received: u64,
+//     native_fee_or_rebate: u64,
+//     order_id: u128,
+//     owner_slot: u8,
+//     fee_tier: u8,
+//     client_order_id: Option<u64>,
+//     referrer_rebate: Option<u64>,
+// }
 
-#[event]
-pub struct OpenOrdersBalanceLog {
-    open_orders: Pubkey,
-    open_orders_owner: Pubkey,
-    market: Pubkey,
-    native_pc_total: u64,
-    native_coin_total: u64,
-    native_coin_free: u64,
-    native_pc_free: u64,
-    referrer_rebates_accrued: u64,
-}
+// #[event]
+// pub struct OpenOrdersBalanceLog {
+//     open_orders: Pubkey,
+//     open_orders_owner: Pubkey,
+//     market: Pubkey,
+//     native_pc_total: u64,
+//     native_coin_total: u64,
+//     native_coin_free: u64,
+//     native_pc_free: u64,
+//     referrer_rebates_accrued: u64,
+// }
 
 #[derive(Copy, Clone)]
 #[repr(packed)]
@@ -3055,35 +3055,35 @@ impl State {
                     let open_orders_pk = Pubkey::new(cast_slice(&identity(owner) as &[_]));
                     let open_orders_owner_pk =
                         Pubkey::new(cast_slice(&identity(open_orders.owner) as &[_]));
-                    emit!(FillEventLog {
-                        market: market.pubkey(),
-                        bid: match side {
-                            Side::Bid => true,
-                            Side::Ask => false,
-                        },
-                        maker,
-                        native_qty_paid,
-                        native_qty_received,
-                        native_fee_or_rebate,
-                        order_id,
-                        open_orders: open_orders_pk,
-                        open_orders_owner: open_orders_owner_pk,
-                        owner_slot,
-                        fee_tier: fee_tier as u8,
-                        client_order_id: client_order_id.map(|i| i.get()),
-                        referrer_rebate
-                    });
+                    // emit!(FillEventLog {
+                    //     market: market.pubkey(),
+                    //     bid: match side {
+                    //         Side::Bid => true,
+                    //         Side::Ask => false,
+                    //     },
+                    //     maker,
+                    //     native_qty_paid,
+                    //     native_qty_received,
+                    //     native_fee_or_rebate,
+                    //     order_id,
+                    //     open_orders: open_orders_pk,
+                    //     open_orders_owner: open_orders_owner_pk,
+                    //     owner_slot,
+                    //     fee_tier: fee_tier as u8,
+                    //     client_order_id: client_order_id.map(|i| i.get()),
+                    //     referrer_rebate
+                    // });
 
-                    emit!(OpenOrdersBalanceLog {
-                        open_orders: open_orders_pk,
-                        open_orders_owner: open_orders_owner_pk,
-                        market: market.pubkey(),
-                        native_pc_total: open_orders.native_pc_total,
-                        native_coin_total: open_orders.native_coin_total,
-                        native_coin_free: open_orders.native_coin_free,
-                        native_pc_free: open_orders.native_pc_free,
-                        referrer_rebates_accrued: open_orders.referrer_rebates_accrued,
-                    })
+                    // emit!(OpenOrdersBalanceLog {
+                    //     open_orders: open_orders_pk,
+                    //     open_orders_owner: open_orders_owner_pk,
+                    //     market: market.pubkey(),
+                    //     native_pc_total: open_orders.native_pc_total,
+                    //     native_coin_total: open_orders.native_coin_total,
+                    //     native_coin_free: open_orders.native_coin_free,
+                    //     native_pc_free: open_orders.native_pc_free,
+                    //     referrer_rebates_accrued: open_orders.referrer_rebates_accrued,
+                    // })
                 }
                 EventView::Out {
                     side,

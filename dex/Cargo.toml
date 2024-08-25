@@ -16,7 +16,6 @@ default = ["program"]
 no-entrypoint = []
 
 [dependencies]
-anchor-lang = ">=0.25.0"
 solana-program = "1.10.41"
 solana-security-txt = "1.0.2"
 spl-token = { version = "3.5.0", features = ["no-entrypoint"] }
@@ -35,7 +34,6 @@ num-traits = "0.2.15"
 arrayref = "0.3.6"
 bytemuck = "1.12.3"
 byteorder = "1.4.3"
-default-env = "0.1.1"
 
 [lib]
 crate-type = ["cdylib", "lib"]
