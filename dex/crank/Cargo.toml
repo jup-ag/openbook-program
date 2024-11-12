@@ -8,13 +8,16 @@ name = "crank"
 path = "src/bin/main.rs"
 
 [dependencies]
-serum_dex = { path = "../", default-features = false, features = ["client", "program"] }
+serum_dex = { path = "../", default-features = false, features = [
+    "client",
+    "program",
+] }
 serum-common = { path = "../../common", features = ["client"] }
-spl-token = { version = "3.5.0", features = ["no-entrypoint"], default-features = false }
-clap = { version = "4.0.29", features = ["derive"] }
+spl-token = { version = ">=5", features = ["no-entrypoint"] }
+clap = { version = "4.5.9", features = ["derive"] }
 enumflags2 = "0.6.4"
-solana-client = "1.10.41"
-solana-sdk = "1.10.41"
+solana-client = "2"
+solana-sdk = "2"
 anyhow = "1.0.66"
 rand = "0.7.3"
 safe-transmute = "0.11.2"
@@ -24,5 +27,5 @@ slog-scope = "4.4.0"
 slog-stdlog = "4.1.1"
 log = "0.4.17"
 debug_print = "1.0.0"
-tokio = {version = "0.2.25", features = ["full"]}
+tokio = { version = "0.2.25", features = ["full"] }
 warp = "0.3.3"

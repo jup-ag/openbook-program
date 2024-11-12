@@ -1,8 +1,11 @@
 #![cfg_attr(not(feature = "program"), allow(unused))]
 use num_enum::TryFromPrimitive;
 use std::{
-    cell::RefMut, convert::identity, convert::TryInto, mem::size_of, num::NonZeroU64, ops::Deref,
-    ops::DerefMut,
+    cell::RefMut,
+    convert::{identity, TryFrom, TryInto},
+    mem::size_of,
+    num::NonZeroU64,
+    ops::{Deref, DerefMut},
 };
 
 use arrayref::{array_ref, array_refs, mut_array_refs};
@@ -579,7 +582,7 @@ impl MarketState {
     }
 
     fn pubkey(&self) -> Pubkey {
-        Pubkey::new(cast_slice(&identity(self.own_address) as &[_]))
+        Pubkey::try_from(cast_slice(&identity(self.own_address) as &[_])).unwrap()
     }
 }
 
@@ -3052,9 +3055,10 @@ impl State {
                         );
                     }
 
-                    let open_orders_pk = Pubkey::new(cast_slice(&identity(owner) as &[_]));
-                    let open_orders_owner_pk =
-                        Pubkey::new(cast_slice(&identity(open_orders.owner) as &[_]));
+                    // let open_orders_pk =
+                    //     Pubkey::try_from(cast_slice(&identity(owner) as &[_])).unwrap();
+                    // let open_orders_owner_pk =
+                    //     Pubkey::try_from(cast_slice(&identity(open_orders.owner) as &[_])).unwrap();
                     // emit!(FillEventLog {
                     //     market: market.pubkey(),
                     //     bid: match side {

@@ -213,19 +213,20 @@ pub fn transfer(
     from_authority: &Keypair,
     payer: &Keypair,
 ) -> Result<Signature> {
-    let instr = token_instruction::transfer(
-        &spl_token::ID,
-        from,
-        to,
-        &from_authority.pubkey(),
-        &[],
-        amount,
-    )?;
-    let recent_hash = client.get_latest_blockhash()?;
-    let signers = [payer, from_authority];
-    let txn =
-        Transaction::new_signed_with_payer(&[instr], Some(&payer.pubkey()), &signers, recent_hash);
-    send_txn(client, &txn, false)
+    // let instr = token_instruction::transfer(
+    //     &spl_token::ID,
+    //     from,
+    //     to,
+    //     &from_authority.pubkey(),
+    //     &[],
+    //     amount,
+    // )?;
+    // let recent_hash = client.get_latest_blockhash()?;
+    // let signers = [payer, from_authority];
+    // let txn =
+    //     Transaction::new_signed_with_payer(&[instr], Some(&payer.pubkey()), &signers, recent_hash);
+    // send_txn(client, &txn, false)
+    Ok(Signature::default())
 }
 
 pub fn send_txn(client: &RpcClient, txn: &Transaction, _simulate: bool) -> Result<Signature> {

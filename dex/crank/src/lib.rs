@@ -5,7 +5,7 @@
 use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::collections::BTreeSet;
-use std::convert::identity;
+use std::convert::{identity, TryFrom};
 use std::mem::size_of;
 use std::num::NonZeroU64;
 use std::sync::{Arc, Mutex};
@@ -449,24 +449,24 @@ fn get_keys_for_market<'a>(
     );
     Ok(MarketPubkeys {
         market: Box::new(*market),
-        req_q: Box::new(Pubkey::new(transmute_one_to_bytes(&identity(
-            market_state.req_q,
-        )))),
-        event_q: Box::new(Pubkey::new(transmute_one_to_bytes(&identity(
-            market_state.event_q,
-        )))),
-        bids: Box::new(Pubkey::new(transmute_one_to_bytes(&identity(
-            market_state.bids,
-        )))),
-        asks: Box::new(Pubkey::new(transmute_one_to_bytes(&identity(
-            market_state.asks,
-        )))),
-        coin_vault: Box::new(Pubkey::new(transmute_one_to_bytes(&identity(
-            market_state.coin_vault,
-        )))),
-        pc_vault: Box::new(Pubkey::new(transmute_one_to_bytes(&identity(
-            market_state.pc_vault,
-        )))),
+        req_q: Box::new(
+            Pubkey::try_from(transmute_one_to_bytes(&identity(market_state.req_q))).unwrap(),
+        ),
+        event_q: Box::new(
+            Pubkey::try_from(transmute_one_to_bytes(&identity(market_state.event_q))).unwrap(),
+        ),
+        bids: Box::new(
+            Pubkey::try_from(transmute_one_to_bytes(&identity(market_state.bids))).unwrap(),
+        ),
+        asks: Box::new(
+            Pubkey::try_from(transmute_one_to_bytes(&identity(market_state.asks))).unwrap(),
+        ),
+        coin_vault: Box::new(
+            Pubkey::try_from(transmute_one_to_bytes(&identity(market_state.coin_vault))).unwrap(),
+        ),
+        pc_vault: Box::new(
+            Pubkey::try_from(transmute_one_to_bytes(&identity(market_state.pc_vault))).unwrap(),
+        ),
         vault_signer_key: Box::new(vault_signer_key),
     })
 }
@@ -618,7 +618,7 @@ fn consume_events_loop(
 
             let mut account_metas = Vec::with_capacity(orders_accounts.len() + 4);
             for pubkey_words in orders_accounts {
-                let pubkey = Pubkey::new(transmute_to_bytes(&pubkey_words));
+                let pubkey = Pubkey::try_from(transmute_to_bytes(&pubkey_words)).unwrap();
                 account_metas.push(AccountMeta::new(pubkey, false));
             }
             for pubkey in [
@@ -803,7 +803,7 @@ pub fn consume_events_instruction(
 
     let mut account_metas = Vec::with_capacity(orders_accounts.len() + 4);
     for pubkey_words in orders_accounts {
-        let pubkey = Pubkey::new(transmute_to_bytes(&pubkey_words));
+        let pubkey = Pubkey::try_from(transmute_to_bytes(&pubkey_words)).unwrap();
         account_metas.push(AccountMeta::new(pubkey, false));
     }
     for pubkey in [&state.market, &state.event_q, coin_wallet, pc_wallet].iter() {
